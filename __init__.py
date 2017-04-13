@@ -1,6 +1,7 @@
 import os
 import sqlite3
 
+from Chainmail.Events import PlayerConnectedEvent, Events
 from Chainmail.Player import Player
 from Chainmail.Plugin import ChainmailPlugin
 
@@ -8,8 +9,10 @@ from Chainmail.Plugin import ChainmailPlugin
 class ChainmailEconomy(ChainmailPlugin):
     def __init__(self, manifest: dict, wrapper: "Wrapper.Wrapper") -> None:
         super().__init__(manifest, wrapper)
-        self.db = sqlite3.connect(os.path.join(manifest["path"], "economy.db"))
+        self.db = sqlite3.connect(os.path.join(manifest["path"], "economy.db"), check_same_thread=False)
         self.initialize_db()
+
+        self.wrapper.EventManager.register_handler(Events.PLAYER_CONNECTED, self.handle_connection)
 
     def get_balance(self, player: Player) -> float:
         """
@@ -25,8 +28,11 @@ class ChainmailEconomy(ChainmailPlugin):
                 cursor.execute("insert into Balances (uuid, balance) values (?, 0.0)", (player.uuid, ))
                 return float(0)
             else:
-                return balance
+                return balance[0]
 
     def initialize_db(self):
         with self.db:
             self.db.execute("create table if not exists Balances (uuid text, balance real)")
+
+    def handle_connection(self, event: PlayerConnectedEvent):
+        self.get_balance(event.player)
