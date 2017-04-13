@@ -16,7 +16,7 @@ class ChainmailEconomy(ChainmailPlugin):
 
     def get_balance(self, player: Player) -> float:
         """
-        Gets the balance of a player
+        Gets the account balance of a player
         :param player: The player to get the balance for
         :return: Their balance
         """
@@ -29,6 +29,16 @@ class ChainmailEconomy(ChainmailPlugin):
                 return float(0)
             else:
                 return balance[0]
+
+    def set_balance(self, player: Player, balance: float) -> None:
+        """
+        Sets the account balance of a player
+        :param player: The player to set the balance for
+        :param balance: Their new balance
+        """
+        with self.db:
+            cursor = self.db.cursor()
+            cursor.execute("update balances set balance = ? where uuid = ?", (balance, player.uuid))
 
     def initialize_db(self):
         with self.db:
