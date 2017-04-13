@@ -2,7 +2,8 @@ import builtins
 import os
 import sqlite3
 
-from Chainmail.Events import PlayerConnectedEvent, Events
+from Chainmail.Events import PlayerConnectedEvent, Events, CommandSentEvent
+from Chainmail.MessageBuilder import MessageBuilder, Colours
 from Chainmail.Player import Player
 from Chainmail.Plugin import ChainmailPlugin
 
@@ -14,6 +15,7 @@ class ChainmailEconomy(ChainmailPlugin):
         self.initialize_db()
 
         self.wrapper.EventManager.register_handler(Events.PLAYER_CONNECTED, self.handle_connection)
+        self.balance = self.wrapper.CommandRegistry.register_command("!balance", "^!balance$", "Gets your account balance.", self.command_balance)
 
         builtins.Economy = self
 
@@ -49,3 +51,10 @@ class ChainmailEconomy(ChainmailPlugin):
 
     def handle_connection(self, event: PlayerConnectedEvent):
         self.get_balance(event.player)
+
+    def command_balance(self, event: CommandSentEvent):
+        balance = self.get_balance(event.player)
+        builder = MessageBuilder()
+        builder.add_field("Your balance is ", Colours.gold)
+        builder.add_field(str(balance), Colours.blue)
+        event.player.send_message(builder)
