@@ -1,3 +1,4 @@
+import builtins
 import os
 import sqlite3
 
@@ -13,6 +14,8 @@ class ChainmailEconomy(ChainmailPlugin):
         self.initialize_db()
 
         self.wrapper.EventManager.register_handler(Events.PLAYER_CONNECTED, self.handle_connection)
+
+        builtins.Economy = self
 
     def get_balance(self, player: Player) -> float:
         """
