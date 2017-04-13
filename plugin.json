@@ -1,0 +1,7 @@
+{
+  "name": "Chainmail Economy",
+  "developer": "nint8835",
+  "version": "1.0.0",
+  "main_class": "ChainmailEconomy",
+  "remote_manifest": "https://raw.githubusercontent.com/Chainmail-Project/ChainmailEconomy/master/plugin.json"
+}
