@@ -16,6 +16,7 @@ class ChainmailEconomy(ChainmailPlugin):
 
         self.wrapper.EventManager.register_handler(Events.PLAYER_CONNECTED, self.handle_connection)
         self.balance = self.wrapper.CommandRegistry.register_command("!balance", "^!balance$", "Gets your account balance.", self.command_balance)
+        self.transfer = self.wrapper.CommandRegistry.register_command("!transfer", "^!transfer ([\\w\\d_]+) ([\\d.]+)$", "Transfers money to another user.", self.command_transfer)
 
         builtins.Economy = self
 
@@ -58,3 +59,29 @@ class ChainmailEconomy(ChainmailPlugin):
         builder.add_field("Your balance is ", Colours.gold)
         builder.add_field(str(balance), Colours.blue)
         event.player.send_message(builder)
+
+    def command_transfer(self, event: CommandSentEvent):
+        recipient = self.wrapper.PlayerManager.get_player(event.args[0][0])
+        if recipient is None:
+            builder = MessageBuilder()
+            builder.add_field("The specified player could not be found.", Colours.red)
+            event.player.send_message(builder)
+            return
+        amount = float(event.args[0][1])
+        if self.get_balance(event.player) < amount:
+            builder = MessageBuilder()
+            builder.add_field("You do not have enough money.", Colours.red)
+            event.player.send_message(builder)
+            return
+        self.set_balance(event.player, self.get_balance(event.player) - amount)
+        self.set_balance(recipient, self.get_balance(recipient) + amount)
+        builder = MessageBuilder()
+        builder.add_field("Money sent!", Colours.gold)
+        event.player.send_message(builder)
+
+        builder = MessageBuilder()
+        builder.add_field("You have recieved ", Colours.gold)
+        builder.add_field(f"{str(amount)} ", Colours.blue)
+        builder.add_field("from ", Colours.gold)
+        builder.add_field(f"{str(event.player.username)}.", Colours.blue)
+        recipient.send_message(builder)
