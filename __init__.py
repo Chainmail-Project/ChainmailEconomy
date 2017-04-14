@@ -17,6 +17,7 @@ class ChainmailEconomy(ChainmailPlugin):
         self.wrapper.EventManager.register_handler(Events.PLAYER_CONNECTED, self.handle_connection)
         self.balance = self.wrapper.CommandRegistry.register_command("!balance", "^!balance$", "Gets your account balance.", self.command_balance)
         self.transfer = self.wrapper.CommandRegistry.register_command("!transfer", "^!transfer ([\\w\\d_]+) ([\\d.]+)$", "Transfers money to another user.", self.command_transfer)
+        self.setbalance_command = self.wrapper.CommandRegistry.register_command("!setbalance", "^!setbalance ([\\w\\d_]+) ([\\d.]+)$", "Sets the account balance for a user.", self.command_setbalance, True)
 
         builtins.Economy = self
 
@@ -85,3 +86,16 @@ class ChainmailEconomy(ChainmailPlugin):
         builder.add_field("from ", Colours.gold)
         builder.add_field(f"{str(event.player.username)}.", Colours.blue)
         recipient.send_message(builder)
+
+    def command_setbalance(self, event: CommandSentEvent):
+        recipient = self.wrapper.PlayerManager.get_player(event.args[0][0])
+        if recipient is None:
+            builder = MessageBuilder()
+            builder.add_field("The specified player could not be found.", Colours.red)
+            event.player.send_message(builder)
+            return
+        amount = float(event.args[0][1])
+        self.set_balance(recipient, amount)
+        builder = MessageBuilder()
+        builder.add_field("Account balance successfully updated.", Colours.gold)
+        event.player.send_message(builder)
