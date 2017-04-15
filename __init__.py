@@ -2,6 +2,7 @@ import builtins
 import os
 import sqlite3
 
+from Chainmail import Wrapper
 from Chainmail.Events import PlayerConnectedEvent, Events, CommandSentEvent
 from Chainmail.MessageBuilder import MessageBuilder, Colours
 from Chainmail.Player import Player
