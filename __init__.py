@@ -1,17 +1,22 @@
 import builtins
 import os
 import sqlite3
+from typing import List, Match
 
 from Chainmail import Wrapper
 from Chainmail.Events import PlayerConnectedEvent, Events, CommandSentEvent
 from Chainmail.MessageBuilder import MessageBuilder, Colours
 from Chainmail.Player import Player
 from Chainmail.Plugin import ChainmailPlugin
+from plugins.ChainmailRCON import RCONClientHandler, ChainmailRCON
 
 
 class ChainmailEconomy(ChainmailPlugin):
     def __init__(self, manifest: dict, wrapper: "Wrapper.Wrapper") -> None:
         super().__init__(manifest, wrapper)
+
+        self.rcon = getattr(builtins, "RCON")  # type: ChainmailRCON
+
         self.db = sqlite3.connect(os.path.join(manifest["path"], "economy.db"), check_same_thread=False)
         self.initialize_db()
 
@@ -19,6 +24,8 @@ class ChainmailEconomy(ChainmailPlugin):
         self.balance = self.wrapper.CommandRegistry.register_command("!balance", "^!balance$", "Gets your account balance.", self.command_balance)
         self.transfer = self.wrapper.CommandRegistry.register_command("!transfer", "^!transfer ([\\w\\d_]+) ([\\d.]+)$", "Transfers money to another user.", self.command_transfer)
         self.setbalance_command = self.wrapper.CommandRegistry.register_command("!setbalance", "^!setbalance ([\\w\\d_]+) ([\\d.]+)$", "Sets the account balance for a user.", self.command_setbalance, True)
+
+        self.rcon.register_command("/balance", "^/balance ([\\w\\d_]+)$", "Gets the account balance for a user.", self.rconcommand_balance)
 
         builtins.Economy = self
 
@@ -100,3 +107,11 @@ class ChainmailEconomy(ChainmailPlugin):
         builder = MessageBuilder()
         builder.add_field("Account balance successfully updated.", Colours.gold)
         event.player.send_message(builder)
+
+    def rconcommand_balance(self, matches: List[Match[str]], client: RCONClientHandler):
+        player = self.wrapper.PlayerManager.get_player(matches[0])
+        if player is None:
+            client.writeline("Player not found")
+            return
+        balance = self.get_balance(player)
+        client.writeline(f"{player.username} has an account balance of {balance}")
